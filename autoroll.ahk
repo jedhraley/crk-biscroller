@@ -16,7 +16,7 @@ if(!DirExist(".\temp")){
 
 screenshotrect:=x . '|' . y . '|' . w . '|' . h
 
-MsgBox('Alt+F8 to start the script`nCtrl+Esc to stop the script')
+MsgBox('Install Tesseract for the script to work`nAlt+F8 to start the script`nCtrl+Esc to stop the script')
 
 
 !F8:: 
@@ -49,8 +49,6 @@ MsgBox('Alt+F8 to start the script`nCtrl+Esc to stop the script')
         subvalue:=Trim(form.Value)
         subtypes:=StrSplit(subtype,' '," `t")
         subvalues:=StrSplit(subvalue,' '," `t")
-        inputkeep:=Array()
-        inputkeep.Length:=subtypes.Length
         delay:=form.Delay
 
         formBox.Destroy()
@@ -74,21 +72,30 @@ MsgBox('Alt+F8 to start the script`nCtrl+Esc to stop the script')
         
         lines:= Array()
         values:= Array()
+        inputkeep:=Array()
+        for i,v in subtypes{
+            inputkeep.Push('0')
+        }
 
         wordarr := StrSplit(textblob,[A_Space, A_Tab,'`n'],'>»)y') ; split 
+
+        ;1st pass for cleaning up strings
         i:=0
         while (i<wordarr.Length){ 
             i++
-            percpos:= RegExMatch(wordarr[i],'%',,1)
-            if (percpos!=0 and (wordarr[i]~='CRIT%')=0){
-                wordarr[i]:=SubStr(wordarr[i],1,percpos-1)
+            percpos:= RegExMatch(wordarr[i],'%',,1) ;find percent sign position is string 
+            if (percpos!=0 and (RegExMatch(wordarr[i],'i)crit%'))=0) 
+                {
+                wordarr[i]:=SubStr(wordarr[i],1,percpos-1) ;remove it if exists in a string (but not from crit%)
             }
-            if (StrLen(wordarr[i])<=2 and !(IsFloat(wordarr[i]) or IsInteger(wordarr[i])) and ((wordarr[i]~='HP')=0)) ; filter out trash
+            if (StrLen(wordarr[i])<=2 and !(IsFloat(wordarr[i]) or IsInteger(wordarr[i])) and ((wordarr[i]~='HP')=0)) ; filter out artifacts
             {
                 wordarr.RemoveAt(i)
                 i:=i-1
             }
         }
+
+        ;2nd pass for sorting cleaned up strings into arrays
         i:=0
         while (i<wordarr.Length){
             i++
@@ -103,14 +110,35 @@ MsgBox('Alt+F8 to start the script`nCtrl+Esc to stop the script')
                 lines.Push(StrLower(wordarr[i]))
             }
         }
+    
         
-        cdkeep:=dmrkeep:=aspdkeep:=dmrbkeep:=eleckeep:=psnkeep:=inputkeep:=0
-        
+        ;compare parsed text against accepted stats/values
         for i,v in lines{
-
-            try switch v
+            for j,s in subtypes{
+                if (s=v){
+                    if(values[i]>=subvalues[j])
+                    inputkeep[j]++
+                }
+            }
+        }
+        ;check the array if we got 2+ lines of the same type to keep
+        for i,v in inputkeep {
+            if (v>1){
+                MsgBox "Girl YES! " . subtypes[i] . ' kept'
+                break 2
+            }
+        }
+            
+            
+            
+            
+            
+            
+            
+            
+            /*try switch v
         {
-            case !noselect:
+            case 1:
                 for j,s in subtypes{
                     if (s=v){
                         if(values[i]>=subvalues[j])
@@ -157,26 +185,8 @@ MsgBox('Alt+F8 to start the script`nCtrl+Esc to stop the script')
             catch IndexError {
                 break
             }
-        }
-        if (subtype='offense' or subtype='nodmr'){
-            if (cdkeep>1 or eleckeep>1 or psnkeep>1 or aspdkeep>1)
-                {
-                    MsgBox "Girl YES!"
-                    break
-                }
-        }
-        else if (subtype!=0){
-            if (inputkeep>1)
-            {
-                MsgBox "Girl YES!"
-            break
-            }
-        }
-        else if (cdkeep>1 or dmrkeep>1 or dmrbkeep>1 or eleckeep>1 or psnkeep>1 or aspdkeep>1)
-            {
-                MsgBox "Girl YES!"
-                break
-            }
+        }*/
+        
         
         
         
@@ -190,6 +200,6 @@ MsgBox('Alt+F8 to start the script`nCtrl+Esc to stop the script')
         }
     */
         biscinfo.Close()
-        Click('Left',0.58*A_ScreenWidth,0.91*A_ScreenHeight)
+        Click('Left',0.58*A_ScreenWidth,0.91*A_ScreenHeight) ; left click on the reroll all button coords
     }
 }
